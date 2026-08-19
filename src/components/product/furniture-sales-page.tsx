@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { DemoDisclaimer } from "@/components/sales-kit/demo-disclaimer";
 import { SalesToolsPanel } from "@/components/sales-kit/sales-tools-panel";
-import { ProductGallery } from "@/components/product/product-gallery";
+import { ProductExperience } from "@/components/product/product-experience";
 import { FurniturePresentation } from "@/components/product/furniture-presentation";
 import type {
   FurnitureDemoProduct,
@@ -100,9 +100,14 @@ export function FurnitureSalesPage({ product }: FurnitureSalesPageProps) {
             </p>
           </div>
 
-          <ProductGallery
+          <ProductExperience
             model={product.model}
             activeVariant={activeVariant}
+            productLabel={`${product.brand} ${product.model}`}
+            modelSrc="/models/furniture/ergo-n1.glb"
+            assetLabel="Interactive 3D"
+            assetNote="ERGO N1 demo presentation asset"
+            targetMaterialNames={["Mesh"]}
           />
         </section>
 
