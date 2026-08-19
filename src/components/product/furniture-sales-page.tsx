@@ -1,5 +1,7 @@
 "use client";
 
+import { ProductInquiryPanel } from "@/components/sales-kit/product-inquiry-panel";
+
 import Link from "next/link";
 import { useState } from "react";
 import { DemoDisclaimer } from "@/components/sales-kit/demo-disclaimer";
@@ -293,7 +295,7 @@ export function FurnitureSalesPage({ product }: FurnitureSalesPageProps) {
               Dari presentasi produk ke tindak lanjut sales.
             </h2>
             <p className="mt-5 max-w-2xl leading-7 text-zinc-400">
-              QR dan WhatsApp menunjukkan bagaimana calon pelanggan dapat
+              Brosur, QR, dan Product Inquiry menunjukkan bagaimana calon pelanggan dapat
               melanjutkan interaksi setelah memahami produk. Seluruh kontak
               pada showcase tetap dalam mode demo yang aman.
             </p>
@@ -322,9 +324,13 @@ export function FurnitureSalesPage({ product }: FurnitureSalesPageProps) {
             </a>
           </div>
 
-          <SalesToolsPanel
+          <SalesToolsPanel sales={product.sales} />
+
+          <ProductInquiryPanel
             productLabel={`${product.brand} ${product.model}`}
-            sales={product.sales}
+            activeVariantLabel={activeVariant.colorLabel}
+            priceLabel={product.priceLabel}
+            useCases={product.useCases}
           />
         </section>
 
