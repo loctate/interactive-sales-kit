@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useState } from "react";
 import { DemoDisclaimer } from "@/components/sales-kit/demo-disclaimer";
+import { SalesToolsPanel } from "@/components/sales-kit/sales-tools-panel";
 import { ProductGallery } from "@/components/product/product-gallery";
+import { FurniturePresentation } from "@/components/product/furniture-presentation";
 import type {
   FurnitureDemoProduct,
   FurnitureVariant,
@@ -17,6 +19,7 @@ export function FurnitureSalesPage({ product }: FurnitureSalesPageProps) {
   const [activeVariantId, setActiveVariantId] = useState(
     product.variants[0]?.id ?? "",
   );
+  const [presentationOpen, setPresentationOpen] = useState(false);
 
   const activeVariant: FurnitureVariant =
     product.variants.find((variant) => variant.id === activeVariantId) ??
@@ -85,15 +88,15 @@ export function FurnitureSalesPage({ product }: FurnitureSalesPageProps) {
               </a>
               <button
                 type="button"
-                disabled
-                className="cursor-not-allowed border border-white/10 px-5 py-3 text-sm text-zinc-500"
+                onClick={() => setPresentationOpen(true)}
+                className="border border-white/15 px-5 py-3 text-sm font-semibold text-zinc-300 transition hover:border-amber-300/50 hover:text-amber-300"
               >
                 {product.sales.presentationLabel}
               </button>
             </div>
 
             <p className="mt-5 text-xs uppercase tracking-[0.18em] text-zinc-600">
-              Mode presentasi akan diaktifkan pada tahap berikutnya.
+              Gunakan Mode Presentasi untuk meeting sales fullscreen.
             </p>
           </div>
 
@@ -277,43 +280,60 @@ export function FurnitureSalesPage({ product }: FurnitureSalesPageProps) {
         </section>
 
         <section className="border-t border-white/10 py-20">
-          <div className="grid gap-8 border border-white/10 bg-[#101216] p-8 lg:grid-cols-[1fr_auto] lg:items-end lg:p-12">
+          <div className="mb-9">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-amber-300">
+              Sales Tools
+            </p>
+            <h2 className="mt-4 max-w-3xl text-4xl font-semibold tracking-[-0.04em]">
+              Dari presentasi produk ke tindak lanjut sales.
+            </h2>
+            <p className="mt-5 max-w-2xl leading-7 text-zinc-400">
+              QR dan WhatsApp menunjukkan bagaimana calon pelanggan dapat
+              melanjutkan interaksi setelah memahami produk. Seluruh kontak
+              pada showcase tetap dalam mode demo yang aman.
+            </p>
+          </div>
+
+          <div className="mb-4 flex flex-col gap-5 border border-white/10 bg-[#101216] p-6 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-amber-300">
-                Sales Tools
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-300">
+                Digital Brochure
               </p>
-              <h2 className="mt-4 max-w-2xl text-4xl font-semibold tracking-[-0.04em]">
-                Lanjutkan penjelasan produk ke calon pelanggan.
-              </h2>
-              <p className="mt-5 max-w-xl leading-7 text-zinc-400">
-                Brosur, QR, WhatsApp, mode presentasi, 3D, dan AR akan menjadi
-                modul tambahan dari engine yang sama.
+              <h3 className="mt-3 text-xl font-semibold">
+                Brosur ERGO N1 siap dibagikan.
+              </h3>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-400">
+                PDF demo berisi overview, fitur, spesifikasi, dimensi, varian,
+                serta placeholder QR yang akan diganti saat URL production aktif.
               </p>
             </div>
 
-            <div className="flex flex-wrap gap-3 lg:justify-end">
-              <button
-                type="button"
-                disabled
-                className="cursor-not-allowed border border-white/10 px-4 py-3 text-sm text-zinc-500"
-              >
-                {product.sales.brochureLabel}
-              </button>
-              <button
-                type="button"
-                disabled
-                className="cursor-not-allowed border border-white/10 px-4 py-3 text-sm text-zinc-500"
-              >
-                {product.sales.whatsappLabel}
-              </button>
-            </div>
+            <a
+              href={product.sales.brochureHref}
+              download
+              className="shrink-0 bg-white px-5 py-3 text-center text-sm font-semibold text-black transition hover:bg-zinc-200"
+            >
+              {product.sales.brochureLabel}
+            </a>
           </div>
+
+          <SalesToolsPanel
+            productLabel={`${product.brand} ${product.model}`}
+            sales={product.sales}
+          />
         </section>
 
         <div className="pb-16">
           <DemoDisclaimer />
         </div>
       </div>
+
+      <FurniturePresentation
+        product={product}
+        activeVariant={activeVariant}
+        open={presentationOpen}
+        onClose={() => setPresentationOpen(false)}
+      />
     </main>
   );
 }

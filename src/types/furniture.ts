@@ -36,8 +36,13 @@ export type FurnitureDemoProduct = {
   useCases: string[];
   sales: {
     brochureLabel: string;
+    brochureHref: string;
     presentationLabel: string;
+    qrLabel: string;
+    qrTarget: string | null;
     whatsappLabel: string;
-    whatsappEnabled: false;
+    whatsappEnabled: boolean;
+    whatsappNumber: string | null;
+    whatsappMessage: string;
   };
 };

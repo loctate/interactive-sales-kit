@@ -78,8 +78,14 @@ export const furnitureDemoProduct: FurnitureDemoProduct = {
 
   sales: {
     brochureLabel: "Download Brosur",
+    brochureHref: "/brochures/nusakarya-ergo-n1-demo.pdf",
     presentationLabel: "Mode Presentasi",
+    qrLabel: "Bagikan via QR",
+    qrTarget: null,
     whatsappLabel: "Hubungi Sales via WhatsApp",
     whatsappEnabled: false,
+    whatsappNumber: null,
+    whatsappMessage:
+      "Halo, saya ingin mendapatkan informasi lebih lanjut mengenai NUSAKARYA ERGO N1.",
   },
 };
