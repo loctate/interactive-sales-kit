@@ -1,6 +1,18 @@
 "use client";
 
 import { type FormEvent, useMemo, useState } from "react";
+import {
+  createProductInquiryRecord,
+  formatProductInquiryPrintHtml,
+  formatProductInquiryText,
+  serializeProductInquiryRecord,
+} from "@/lib/sales/inquiry";
+import {
+  createProductInquiryIntegrationEvent,
+  PRODUCT_INQUIRY_EVENT_NAME,
+  PRODUCT_INQUIRY_TARGETS,
+  serializeProductInquiryIntegrationEvent,
+} from "@/lib/sales/integration";
 import type {
   ProductInquiryContext,
   ProductInquiryDraft,
@@ -21,29 +33,22 @@ const EMPTY_DRAFT: ProductInquiryDraft = {
   notes: "",
 };
 
-function buildSalesSummary(summary: ProductInquirySummary) {
-  const lines = [
-    "NUSAKARYA — PRODUCT INQUIRY",
-    "",
-    `Produk       : ${summary.productLabel}`,
-    `Varian       : ${summary.activeVariantLabel}`,
-    `Harga        : ${summary.priceLabel}`,
-    `Kebutuhan    : ${summary.useCase}`,
-    `Jumlah       : ${summary.quantity} unit`,
-    `Nama         : ${summary.name}`,
-    `Perusahaan   : ${summary.company || "Tidak diisi"}`,
-  ];
+function downloadBrowserFile(
+  filename: string,
+  content: string,
+  mimeType: string,
+) {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
 
-  if (summary.notes.trim()) {
-    lines.push("", "Catatan:", summary.notes.trim());
-  }
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
 
-  lines.push(
-    "",
-    "Referensi: Interactive Sales Kit — demo produk fiktif.",
-  );
-
-  return lines.join("\n");
+  window.setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
 export function ProductInquiryPanel({
@@ -69,9 +74,19 @@ export function ProductInquiryPanel({
     [activeVariantLabel, draft, priceLabel, productLabel],
   );
 
-  const salesSummary = useMemo(
-    () => buildSalesSummary(summary),
+  const inquiryRecord = useMemo(
+    () => createProductInquiryRecord(summary),
     [summary],
+  );
+
+  const integrationEvent = useMemo(
+    () => createProductInquiryIntegrationEvent(inquiryRecord),
+    [inquiryRecord],
+  );
+
+  const salesSummary = useMemo(
+    () => formatProductInquiryText(inquiryRecord),
+    [inquiryRecord],
   );
 
   const whatsappUrl = useMemo(
@@ -114,6 +129,47 @@ export function ProductInquiryPanel({
       console.error("[COPY SALES SUMMARY]", error);
       setCopyState("failed");
     }
+  }
+
+  function downloadTextSummary() {
+    downloadBrowserFile(
+      "nusakarya-ergo-n1-inquiry.txt",
+      salesSummary,
+      "text/plain;charset=utf-8",
+    );
+  }
+
+  function downloadJsonRecord() {
+    downloadBrowserFile(
+      "nusakarya-ergo-n1-inquiry.json",
+      serializeProductInquiryRecord(inquiryRecord),
+      "application/json;charset=utf-8",
+    );
+  }
+
+  function downloadIntegrationPayload() {
+    downloadBrowserFile(
+      "nusakarya-ergo-n1-integration-event.json",
+      serializeProductInquiryIntegrationEvent(integrationEvent),
+      "application/json;charset=utf-8",
+    );
+  }
+
+  function openPrintableHandoff() {
+    const html = formatProductInquiryPrintHtml(inquiryRecord);
+    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const previewWindow = window.open(url, "_blank");
+
+    if (!previewWindow) {
+      URL.revokeObjectURL(url);
+      window.alert(
+        "Preview diblokir browser. Izinkan pop-up untuk membuka Sales Handoff.",
+      );
+      return;
+    }
+
+    window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
   }
 
   return (
@@ -277,7 +333,7 @@ export function ProductInquiryPanel({
                 </div>
 
                 <span className="border border-white/10 px-3 py-2 text-[10px] uppercase tracking-[0.18em] text-zinc-500">
-                  Demo Local Only
+                  Schema v{inquiryRecord.schemaVersion}
                 </span>
               </div>
 
@@ -287,32 +343,128 @@ export function ProductInquiryPanel({
                 </pre>
               </div>
 
-              <div className="mt-5 flex flex-wrap items-center gap-3">
-                <button
-                  type="button"
-                  onClick={copySummary}
-                  className="border border-amber-300/40 px-5 py-3 text-sm font-semibold text-amber-300 transition hover:bg-amber-300 hover:text-black"
-                >
-                  {copyState === "copied"
-                    ? "Ringkasan Tersalin"
-                    : "Salin Ringkasan"}
-                </button>
+              <div className="mt-5 grid gap-4 xl:grid-cols-[1.35fr_0.65fr]">
+                <div className="border border-white/10 bg-white/[0.015] p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-300">
+                        Human Handoff
+                      </p>
+                      <p className="mt-1 text-xs text-zinc-600">
+                        Untuk sales, customer, email, dan follow-up langsung.
+                      </p>
+                    </div>
 
-                <a
-                  href={whatsappUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="bg-amber-300 px-5 py-3 text-sm font-semibold text-black transition hover:bg-amber-200"
-                >
-                  Lanjutkan via WhatsApp
-                </a>
+                    <span className="border border-white/10 px-2 py-1 text-[10px] uppercase tracking-[0.16em] text-zinc-600">
+                      Sales Ready
+                    </span>
+                  </div>
+
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    <button
+                      type="button"
+                      onClick={copySummary}
+                      className="border border-amber-300/40 px-4 py-3 text-sm font-semibold text-amber-300 transition hover:bg-amber-300 hover:text-black"
+                    >
+                      {copyState === "copied"
+                        ? "Ringkasan Tersalin"
+                        : "Salin Ringkasan"}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={downloadTextSummary}
+                      className="border border-white/15 px-4 py-3 text-sm font-semibold text-zinc-300 transition hover:border-white/30 hover:text-white"
+                    >
+                      Download TXT
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={openPrintableHandoff}
+                      className="border border-white/15 px-4 py-3 text-sm font-semibold text-zinc-300 transition hover:border-white/30 hover:text-white"
+                    >
+                      Preview / Print PDF
+                    </button>
+
+                    <a
+                      href={whatsappUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="bg-amber-300 px-4 py-3 text-sm font-semibold text-black transition hover:bg-amber-200"
+                    >
+                      Lanjutkan via WhatsApp
+                    </a>
+                  </div>
+                </div>
+
+                <div className="border border-white/10 bg-[#0b0d10] p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-400">
+                        System Handoff
+                      </p>
+                      <p className="mt-1 text-xs text-zinc-600">
+                        Contract siap untuk CRM, database, API, webhook, atau automation.
+                      </p>
+                    </div>
+
+                    <span className="border border-white/10 px-2 py-1 text-[10px] uppercase tracking-[0.16em] text-zinc-600">
+                      Contract v{integrationEvent.contractVersion}
+                    </span>
+                  </div>
+
+                  <dl className="mt-4 grid gap-2 border border-white/10 bg-black/20 p-3 text-xs">
+                    <div className="flex justify-between gap-4">
+                      <dt className="text-zinc-600">Event</dt>
+                      <dd className="text-right font-mono text-zinc-300">
+                        {PRODUCT_INQUIRY_EVENT_NAME}
+                      </dd>
+                    </div>
+                    <div className="flex justify-between gap-4">
+                      <dt className="text-zinc-600">Transport</dt>
+                      <dd className="text-right text-zinc-400">
+                        Not configured — demo
+                      </dd>
+                    </div>
+                    <div className="flex justify-between gap-4">
+                      <dt className="text-zinc-600">Targets</dt>
+                      <dd className="text-right text-zinc-400">
+                        {PRODUCT_INQUIRY_TARGETS.join(" · ")}
+                      </dd>
+                    </div>
+                  </dl>
+
+                  <div className="mt-4 grid gap-3">
+                    <button
+                      type="button"
+                      onClick={downloadJsonRecord}
+                      className="w-full border border-white/15 px-4 py-3 text-sm font-semibold text-zinc-300 transition hover:border-white/30 hover:text-white"
+                    >
+                      Download Structured JSON
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={downloadIntegrationPayload}
+                      className="w-full border border-amber-300/30 px-4 py-3 text-sm font-semibold text-amber-300 transition hover:bg-amber-300 hover:text-black"
+                    >
+                      Download Integration Payload
+                    </button>
+                  </div>
+
+                  <p className="mt-3 text-xs leading-5 text-zinc-700">
+                    Payload integration membungkus structured inquiry ke event contract
+                    stabil tanpa mengirim data ke service eksternal.
+                  </p>
+                </div>
               </div>
 
               <div className="mt-4 border-l border-amber-300/30 pl-4">
                 <p className="text-xs leading-6 text-zinc-500">
-                  Tombol WhatsApp membawa ringkasan inquiry sebagai pesan awal.
-                  Demo ini tidak menanamkan nomor sales tertentu; pengguna memilih
-                  tujuan percakapan pada WhatsApp.
+                  Human handoff dan system handoff berasal dari structured
+                  inquiry record yang sama. Integration contract hanya menyiapkan
+                  format event; demo belum mengirim data ke backend atau service eksternal.
                 </p>
               </div>
 
